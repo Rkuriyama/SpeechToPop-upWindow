@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<head>
+    <meta charset="utf-8"/>
+    <title>Explanation PopUp</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+</head>
+<body>
+    <div id="app">
+        <button v-on:click="start">record</button>
+        <button v-on:click="stop">stop</button>
+        <pop-up v-bind:title="title" v-bind:description="description" ></pop-up>
+    </div>
+    <script src="src/script.js"></script>
+</body>
