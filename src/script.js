@@ -50,21 +50,41 @@ function searchWord (script, wordList){
     return result;
 }
 
+///////////////// ポップアップ
 Vue.component('pop-up', {
     props:['title','description'],
     template: `
-        <div>
-            <h3>{{title}}</h3>
-            <p>{{description}}</p>
+        <div id="background">
+            <div id="pop_up_window">
+                <div id="pop_up_title">{{title}}</div>
+                <div id="pop_up_description">{{description}}</div>
+            </div>
         </div>
     `
 });
 
+///////////////// リスト
+Vue.component('wordlist',{
+    props:['title', 'description','state'],
+    template: `
+            <button v-on:click="set">{{title}}</button>
+    `,
+    methods: {
+        set: function(event){
+            this.state.list = [this.title];
+            console.log(recogObj.state.list)
+        }
+    }
+});
+
+
+////////////////// 本体
 var app = new Vue({
     el: '#app',
     data: {
         sharedObj: recogObj,
         state: recogObj.state,
+        Words: GWL
     },
     methods: {
         start: function(event){
@@ -82,6 +102,4 @@ var app = new Vue({
           return GWL[ this.state.list[0] ];
       }
     }
-
-
 });

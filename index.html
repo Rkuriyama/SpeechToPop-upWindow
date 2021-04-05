@@ -3,12 +3,22 @@
     <meta charset="utf-8"/>
     <title>Explanation PopUp</title>
     <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+    <link rel="stylesheet" href="./src/main.css">
+    
 </head>
 <body>
     <div id="app">
+        <pop-up v-bind:title="title" v-bind:description="description" ></pop-up>
         <button v-on:click="start">record</button>
         <button v-on:click="stop">stop</button>
-        <pop-up v-bind:title="title" v-bind:description="description" ></pop-up>
+        <div>
+            <wordlist
+                v-for="(description, word) in Words"
+                v-bind:title="word"
+                v-bind:description="description"
+                v-bind:state="state"
+            ></wordlist>
+        </div>
     </div>
     <script src="src/script.js"></script>
 </body>
