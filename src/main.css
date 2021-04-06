@@ -1,6 +1,14 @@
+:root {
+    --active-time: 4s;
+}
+
 #background {
     background-color: green;
     padding: 20px;
+    width: 290px;
+    height: 190px;
+    position: relative;
+    overflow: hidden;
 }
     #pop_up_window {
         width: 250px;
@@ -17,3 +25,29 @@
         #pop_up_description {
             padding: 5px;
         }
+
+    .slide-up-enter-active, .slide-up-leave-active{
+        transition: all .5s ease;
+    }
+    .slide-up-enter, .slide-up-leave-to {
+        transform: translateY(290px);
+    }
+
+    #active-bar {
+        animation: leak var(--active-time) linear;
+        position: absolute;
+        bottom: 0;
+        left: 0;
+
+        height: 20px;
+        background-color: black;
+    }
+
+    @keyframes leak {
+        0% {
+            width: 100%;
+        }
+        100% {
+            width: 0%;
+        }
+    }

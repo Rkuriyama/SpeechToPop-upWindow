@@ -5,6 +5,11 @@ var GWL = {
     "ガジェット": "各オペレータに用意されている道具。"
 }
 
+//// 表示時間指定
+const ActiveTime = 4000; // msec
+document.documentElement.style.setProperty('--active-time', (ActiveTime/1000) + 's')
+
+
 SpeechRecognition = webkitSpeechRecognition || SpeechRecognition;
 
 var recogObj = {
@@ -12,9 +17,15 @@ var recogObj = {
     state: {
         finalTranscript: 'hi',
         interimTranscript: '',
-        list: ['test']
+        list: ['test'],
+        active: false
     },
-    control: new SpeechRecognition()
+    control: new SpeechRecognition(),
+    activate: function() {
+        console.log(this);
+        this.state.active = true;
+        setTimeout(()=>{this.state.active=false;}, ActiveTime)
+    }
 }
 
 recogObj.control.lang = 'ja-JP';
@@ -26,15 +37,21 @@ recogObj.control.onresult = (event) => {
         if (event.results[i].isFinal) {
             recogObj.state.finalTranscript += transcript;
             // キーワード検索して、合致したらキューに追加。pop up表示に投げる
-            recogObj.state.list = searchWord(recogObj.state.finalTranscript, GWL);
-            recogObj.state.finalTranscript = '';
-            console.log(recogObj.state.list);
+            if(!recogObj.state.active){
+                recogObj.state.list = searchWord(recogObj.state.finalTranscript, GWL);
+                recogObj.state.finalTranscript = '';
+                console.log(recogObj.state.list);
+                if(recogObj.state.list.length > 0)recogObj.activate();
+            }
+
+
         } else {
             recogObj.state.interimTranscript = transcript;
         }
         console.log(transcript);
     }
 }
+
 
 //////////////// 単語検索
 function searchWord (script, wordList){
@@ -52,27 +69,36 @@ function searchWord (script, wordList){
 
 ///////////////// ポップアップ
 Vue.component('pop-up', {
-    props:['title','description'],
+    props:['title','description','show'],
     template: `
         <div id="background">
-            <div id="pop_up_window">
+            <transition name="slide-up">
+            <div v-if="show" id="pop_up_window">
                 <div id="pop_up_title">{{title}}</div>
                 <div id="pop_up_description">{{description}}</div>
             </div>
+            </transition>
+            <transition name="leak">
+            <div v-if="show" id="active-bar">
+            </div>
+            </transition>
         </div>
     `
 });
 
 ///////////////// リスト
 Vue.component('wordlist',{
-    props:['title', 'description','state'],
+    props:['title', 'description','state', 'target'],
     template: `
             <button v-on:click="set">{{title}}</button>
     `,
     methods: {
         set: function(event){
-            this.state.list = [this.title];
-            console.log(recogObj.state.list)
+            if(!this.state.active){
+                this.state.list = [this.title];
+                console.log(recogObj.state.list)
+                this.target.activate();
+            }
         }
     }
 });
@@ -100,6 +126,9 @@ var app = new Vue({
         },    
         description: function(){
           return GWL[ this.state.list[0] ];
-      }
+        },
+        show: function(){
+            return (this.state.active);
+        }
     }
 });

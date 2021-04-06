@@ -4,19 +4,24 @@
     <title>Explanation PopUp</title>
     <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
     <link rel="stylesheet" href="./src/main.css">
-    
 </head>
 <body>
     <div id="app">
-        <pop-up v-bind:title="title" v-bind:description="description" ></pop-up>
+        <pop-up 
+            v-bind:title="title"
+            v-bind:description="description"
+            v-bind:show="show">
+        </pop-up>
         <button v-on:click="start">record</button>
         <button v-on:click="stop">stop</button>
         <div>
+            手動表示用ボタン
             <wordlist
                 v-for="(description, word) in Words"
                 v-bind:title="word"
                 v-bind:description="description"
                 v-bind:state="state"
+                v-bind:target="sharedObj"
             ></wordlist>
         </div>
     </div>
