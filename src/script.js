@@ -43,8 +43,6 @@ recogObj.control.onresult = (event) => {
                 console.log(recogObj.state.list);
                 if(recogObj.state.list.length > 0)recogObj.activate();
             }
-
-
         } else {
             recogObj.state.interimTranscript = transcript;
         }
