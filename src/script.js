@@ -18,11 +18,13 @@ var recogObj = {
         finalTranscript: 'hi',
         interimTranscript: '',
         list: ['test'],
-        active: false
+        active: false,
+        done: -1
     },
     control: new SpeechRecognition(),
-    activate: function() {
+    activate: function(idx) {
         console.log(this);
+        this.state.done = idx;
         this.state.active = true;
         setTimeout(()=>{this.state.active=false;}, ActiveTime)
     }
@@ -36,19 +38,29 @@ recogObj.control.onresult = (event) => {
         let transcript = event.results[i][0].transcript;
         if (event.results[i].isFinal) {
             recogObj.state.finalTranscript += transcript;
+            /*
             // キーワード検索して、合致したらキューに追加。pop up表示に投げる
             if(!recogObj.state.active){
                 recogObj.state.list = searchWord(recogObj.state.finalTranscript, GWL);
                 recogObj.state.finalTranscript = '';
-                console.log(recogObj.state.list);
                 if(recogObj.state.list.length > 0)recogObj.activate();
             }
+            */
         } else {
+            console.log(transcript);
             recogObj.state.interimTranscript = transcript;
+
+            // キーワード検索して、合致したらキューに追加。pop up表示に投げる
+            if(!recogObj.state.active && recogObj.state.done < i){
+                recogObj.state.list = searchWord(transcript, GWL);
+                if(recogObj.state.list.length > 0){
+                    recogObj.activate(i);
+                }
+            }
         }
-        console.log(transcript);
     }
 }
+
 
 
 //////////////// 単語検索
@@ -95,11 +107,11 @@ Vue.component('wordlist',{
             if(!this.state.active){
                 this.state.list = [this.title];
                 console.log(recogObj.state.list)
-                this.target.activate();
+                this.target.activate(this.target.state.done); 
             }
         }
     }
-});
+   });
 
 
 ////////////////// 本体
@@ -116,6 +128,7 @@ var app = new Vue({
         },
         stop: function(event){
             this.sharedObj.control.stop();
+            this.state.done = -1;
         }
     },
     computed: {
