@@ -1,0 +1,189 @@
+{
+  "schemaVersion": 3,
+  "title": "FINAL FANTASY XIV 用語集",
+  "contextBiasTerms": [
+    "ナイト",
+    "戦士",
+    "暗黒騎士",
+    "ガンブレイカー",
+    "白魔道士",
+    "学者",
+    "占星術師",
+    "賢者",
+    "モンク",
+    "竜騎士",
+    "忍者",
+    "侍",
+    "リーパー",
+    "ヴァイパー",
+    "吟遊詩人",
+    "機工士",
+    "踊り子",
+    "黒魔道士",
+    "召喚士",
+    "赤魔道士",
+    "ピクトマンサー",
+    "アルフィノ",
+    "アリゼー",
+    "ヤシュトラ",
+    "サンクレッド",
+    "ウリエンジェ",
+    "グラハティア",
+    "エスティニアン",
+    "クルル",
+    "タタル",
+    "エメトセルク",
+    "ヒュトロダエウス",
+    "ヴェーネス",
+    "ゼノス",
+    "ウクラマト",
+    "コーナ",
+    "スフェーン",
+    "エオルゼア",
+    "リムサロミンサ",
+    "グリダニア",
+    "ウルダハ",
+    "イシュガルド",
+    "アラミゴ",
+    "ドマ",
+    "クリスタリウム",
+    "オールドシャーレアン",
+    "トライヨラ",
+    "アルカディア"
+  ],
+  "settings": {
+    "displaySeconds": 4,
+    "enterSeconds": 0.5,
+    "exitSeconds": 0.5,
+    "queueIntervalSeconds": 0.4,
+    "queueMaxItems": 3,
+    "maxMatchesPerTranscript": 3,
+    "cooldownSeconds": 45,
+    "appearance": {
+      "width": 560,
+      "height": 190,
+      "titleFontSize": 34,
+      "descriptionFontSize": 20,
+      "borderRadius": 20,
+      "fontFamily": "serif",
+      "textAlign": "left",
+      "accentColor": "#c9a7ff",
+      "backgroundColor": "#171523",
+      "textColor": "#f7f3ff"
+    }
+  },
+  "terms": [
+    {
+      "id": "gcd",
+      "title": "GCD (グローバルクールダウン)",
+      "aliases": ["GCD", "ジーシーディー", "グローバルクールダウン"],
+      "description": "多くのウェポンスキルや魔法で共有される再使用待ち時間。基本の攻撃リズムを決める。",
+      "enabled": true
+    },
+    {
+      "id": "ogcd",
+      "title": "oGCD (オフグローバルクールダウン)",
+      "aliases": ["oGCD", "オージーシーディー", "オフグローバルクールダウン"],
+      "description": "GCDを共有しないアビリティの通称。GCDの合間に使うことで行動効率を高められる。",
+      "enabled": true
+    },
+    {
+      "id": "dot",
+      "title": "DoT (継続ダメージ)",
+      "aliases": ["DoT", "ドット", "継続ダメージ"],
+      "description": "一定時間、対象へ周期的にダメージを与える効果。Damage over Timeの略。",
+      "enabled": true
+    },
+    {
+      "id": "hot",
+      "title": "HoT (継続回復)",
+      "aliases": ["HoT", "ホット", "継続回復"],
+      "description": "一定時間、対象のHPを周期的に回復する効果。Heal over Timeの略。",
+      "enabled": true
+    },
+    {
+      "id": "aoe",
+      "title": "AoE (範囲効果)",
+      "aliases": ["AoE", "エーオーイー", "範囲効果", "範囲攻撃"],
+      "description": "複数の対象や指定範囲へ作用する攻撃・回復・ギミック。Area of Effectの略。",
+      "enabled": true
+    },
+    {
+      "id": "limit-break",
+      "title": "LB (リミットブレイク)",
+      "aliases": ["LB", "エルビー", "リミットブレイク", "リミブレ"],
+      "description": "パーティで共有するゲージを消費して使う強力なアクション。ロールによって効果が異なる。",
+      "enabled": true
+    },
+    {
+      "id": "enmity",
+      "title": "敵視",
+      "aliases": ["敵視", "ヘイト", "エンミティ"],
+      "description": "敵が各プレイヤーを攻撃対象として評価する度合い。通常は最も敵視の高い相手を狙う。",
+      "enabled": true
+    },
+    {
+      "id": "main-tank",
+      "title": "MT (メインタンク)",
+      "aliases": ["MT", "エムティー", "メインタンク"],
+      "description": "主にボスの敵視を維持し、正面で攻撃を受け持つタンク役。Main Tankの略。",
+      "enabled": true
+    },
+    {
+      "id": "off-tank",
+      "title": "ST (サブタンク)",
+      "aliases": ["ST", "エスティー", "サブタンク", "オフタンク"],
+      "description": "MTを補助し、追加の敵への対応やギミック処理、必要に応じた交代を担当するタンク役。",
+      "enabled": true
+    },
+    {
+      "id": "tank-swap",
+      "title": "タンクスイッチ",
+      "aliases": ["タンクスイッチ", "タンク交代"],
+      "description": "挑発などを使って、ボスの攻撃を受け持つタンクをMTとSTの間で交代する処理。",
+      "enabled": true
+    },
+    {
+      "id": "stack-marker",
+      "title": "頭割り攻撃",
+      "aliases": ["頭割り攻撃", "頭割り", "あたまわり", "スタックマーカー"],
+      "description": "複数人で同じ位置に集まり、対象攻撃のダメージを参加人数で分散して受けるギミック。",
+      "enabled": true
+    },
+    {
+      "id": "spread",
+      "title": "散開",
+      "aliases": ["散開", "スプレッド"],
+      "description": "各プレイヤーへの範囲攻撃を重ねないよう、互いに距離を取って配置するギミック。",
+      "enabled": true
+    },
+    {
+      "id": "dps-check",
+      "title": "DPSチェック",
+      "aliases": ["DPSチェック", "火力チェック"],
+      "description": "制限時間までに必要量のダメージを与えられるかを試す局面。失敗すると全滅につながることが多い。",
+      "enabled": true
+    },
+    {
+      "id": "mitigation",
+      "title": "ダメージ軽減",
+      "aliases": ["ダメージ軽減", "軽減"],
+      "description": "防御アクションやバリアで受けるダメージを抑えること。強力な全体攻撃への対策に使う。",
+      "enabled": true
+    },
+    {
+      "id": "burst",
+      "title": "バースト",
+      "aliases": ["バースト"],
+      "description": "強化効果や高威力アクションを同じ時間帯に集中させ、大きなダメージを与えること。",
+      "enabled": true
+    },
+    {
+      "id": "wipe",
+      "title": "ワイプ",
+      "aliases": ["ワイプ", "全滅"],
+      "description": "パーティが戦闘を継続できない状態になり、全滅または意図的な仕切り直しを行うこと。",
+      "enabled": true
+    }
+  ]
+}
