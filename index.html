@@ -1,29 +1,423 @@
 <!DOCTYPE html>
+<html lang="ja">
 <head>
-    <meta charset="utf-8"/>
-    <title>Explanation PopUp</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Speech Popup Studio</title>
     <script src="https://cdn.jsdelivr.net/npm/vue@2"></script>
+    <script src="./src/sherpa-bootstrap.js"></script>
     <link rel="stylesheet" href="./src/main.css">
 </head>
 <body>
-    <div id="app">
-        <pop-up 
-            v-bind:title="title"
-            v-bind:description="description"
-            v-bind:show="show">
-        </pop-up>
-        <button v-on:click="start">record</button>
-        <button v-on:click="stop">stop</button>
-        <div>
-            手動表示用ボタン<br>
-            <wordlist
-                v-for="(description, word) in Words"
-                v-bind:title="word"
-                v-bind:description="description"
-                v-bind:state="state"
-                v-bind:target="sharedObj"
-            ></wordlist>
+    <div id="app" v-bind:class="{ 'overlay-runtime': overlayMode }">
+        <div v-if="overlayMode" class="overlay-stage">
+            <pop-up
+                v-bind:title="popupTitle"
+                v-bind:description="popupDescription"
+                v-bind:show="show"
+                v-bind:active="show"
+                v-bind:activation-key="popupKey"
+            ></pop-up>
         </div>
+
+        <div v-else class="app-shell">
+            <header class="app-header">
+                <div class="brand">
+                    <div class="brand-mark" aria-hidden="true">
+                        <span></span><span></span><span></span>
+                    </div>
+                    <div>
+                        <p class="eyebrow">LIVE OVERLAY TOOLKIT</p>
+                        <div class="brand-title-row">
+                            <h1>Speech Popup Studio</h1>
+                            <span v-if="recognitionEngine === 'sherpa-onnx'" class="engine-badge">
+                                sherpa-onnx WASM
+                            </span>
+                        </div>
+                        <p class="brand-copy">実況中の専門用語を、見やすい解説カードとして表示します。</p>
+                    </div>
+                </div>
+                <div class="header-status">
+                    <span class="status-chip"><b>{{ terms.length }}</b> terms</span>
+                    <span v-bind:class="['status-chip', { online: speechRecognitionAvailable }]">
+                        {{ recognitionStatusLabel }}
+                    </span>
+                </div>
+            </header>
+
+            <main class="workspace">
+                <section class="preview-panel panel">
+                    <div class="panel-heading">
+                        <div>
+                            <p class="section-label">OUTPUT PREVIEW</p>
+                            <h2>ポップアップ表示</h2>
+                        </div>
+                        <button class="overlay-link" type="button" v-on:click="copyOverlayUrl">
+                            {{ overlayCopyStatus === 'copied' ? 'コピーしました' : 'OBS URLをコピー' }}
+                            <span aria-hidden="true">{{ overlayCopyStatus === 'copied' ? '✓' : '⧉' }}</span>
+                        </button>
+                    </div>
+
+                    <div class="preview-stage">
+                        <div class="preview-grid" aria-hidden="true"></div>
+                        <span class="preview-badge">PREVIEW</span>
+                        <pop-up
+                            v-bind:title="popupTitle"
+                            v-bind:description="popupDescription"
+                            v-bind:show="show"
+                            v-bind:active="show"
+                            v-bind:activation-key="popupKey"
+                        ></pop-up>
+                    </div>
+
+                    <div class="queue-stage">
+                        <span class="queue-badge">QUEUE</span>
+                        <transition-group name="queue-list" tag="div" class="preview-queue">
+                            <div
+                                v-for="item in queueItems"
+                                v-bind:key="item.queueId"
+                                v-bind:class="['queue-item', item.current ? 'current' : 'waiting']"
+                                v-bind:aria-label="item.title + (item.current ? '（表示中）' : '（表示待ち）')"
+                            >
+                                {{ item.title }}
+                            </div>
+                        </transition-group>
+                    </div>
+
+                    <section v-bind:class="['recognition-debug', { collapsed: !recognitionDebugOpen }]">
+                        <div class="recognition-debug-header">
+                            <div>
+                                <span class="recognition-debug-label">RECOGNITION DEBUG</span>
+                                <small>{{ state.debugEntries.length }} logs</small>
+                            </div>
+                            <button
+                                class="recognition-debug-toggle"
+                                type="button"
+                                v-bind:aria-expanded="String(recognitionDebugOpen)"
+                                aria-controls="recognition-debug-text"
+                                v-bind:aria-label="recognitionDebugOpen ? '認識デバッグを閉じる' : '認識デバッグを開く'"
+                                v-on:click="toggleRecognitionDebug"
+                            >{{ recognitionDebugOpen ? '−' : '＋' }}</button>
+                        </div>
+                        <textarea
+                            v-show="recognitionDebugOpen"
+                            id="recognition-debug-text"
+                            ref="recognitionDebugText"
+                            class="recognition-debug-text"
+                            readonly
+                            v-bind:value="recognitionDebugText"
+                            placeholder="音声認識を開始すると、認識文・一致alias・表示結果がここに表示されます。"
+                            aria-label="音声認識デバッグログ"
+                        ></textarea>
+                    </section>
+
+                    <div class="preview-footer">
+                        <span>OBS Browser Source</span>
+                        <code>?overlay=1</code>
+                        <span>背景透過・右下配置</span>
+                    </div>
+                </section>
+
+                <aside class="control-column">
+                    <section class="panel control-card">
+                        <div class="panel-heading compact">
+                            <div>
+                                <p class="section-label">RECOGNITION</p>
+                                <h2>音声認識</h2>
+                            </div>
+                            <span v-if="state.recording" class="recording-indicator">
+                                <i></i> LIVE
+                            </span>
+                        </div>
+
+                        <div class="button-row">
+                            <button
+                                class="button primary"
+                                type="button"
+                                v-on:click="start"
+                                v-bind:disabled="!speechRecognitionAvailable || state.recording || recognitionEngineStatus.phase === 'starting'"
+                            >
+                                認識を開始
+                            </button>
+                            <button
+                                class="button secondary"
+                                type="button"
+                                v-on:click="stop"
+                                v-bind:disabled="!speechRecognitionAvailable || !state.recording"
+                            >
+                                停止
+                            </button>
+                        </div>
+
+                        <div v-if="recognitionEngine === 'sherpa-onnx'" class="engine-status-card">
+                            <div class="engine-status-heading">
+                                <span v-bind:class="['engine-status-dot', recognitionEngineStatus.phase]"></span>
+                                <strong>{{ recognitionEngineStatus.message }}</strong>
+                            </div>
+                            <div
+                                v-if="recognitionEngineStatus.progress !== null"
+                                class="engine-progress"
+                                role="progressbar"
+                                aria-label="日本語認識モデルの読み込み"
+                                aria-valuemin="0"
+                                aria-valuemax="100"
+                                v-bind:aria-valuenow="Math.round(recognitionEngineStatus.progress)"
+                            >
+                                <span v-bind:style="{ width: recognitionEngineStatus.progress + '%' }"></span>
+                            </div>
+                            <p>
+                                ReazonSpeech 日本語 Zipformer / VAD / CPUローカル処理 /
+                                Offline疑似ストリーミング /
+                                用語ヒント {{ recognitionEngineStatus.hotwordsCount || 0 }}語
+                            </p>
+                        </div>
+
+                        <a
+                            class="button secondary engine-switch-button"
+                            v-bind:href="recognitionEngineSwitchUrl"
+                            v-bind:aria-label="recognitionEngineSwitchLabel"
+                        >
+                            <span>{{ recognitionEngineSwitchLabel }}</span>
+                            <span aria-hidden="true">→</span>
+                        </a>
+                    </section>
+
+                    <section class="panel control-card">
+                        <div class="panel-heading compact">
+                            <div>
+                                <p class="section-label">GLOSSARY</p>
+                                <h2>{{ glossaryTitle }}</h2>
+                            </div>
+                        </div>
+
+                        <div class="button-row single">
+                            <label class="button primary file-picker">
+                                JSONを読み込む
+                                <input
+                                    type="file"
+                                    accept="application/json,.json"
+                                    v-on:change="uploadGlossary"
+                                >
+                            </label>
+                        </div>
+
+                        <p v-bind:class="['load-status', loadStatus.type]">
+                            <span class="status-dot" aria-hidden="true"></span>
+                            {{ loadStatus.message }}
+                        </p>
+                    </section>
+
+                    <section class="panel control-card terms-card">
+                        <div class="panel-heading compact">
+                            <div>
+                                <p class="section-label">MANUAL TRIGGER</p>
+                                <h2>手動表示</h2>
+                            </div>
+                            <span class="term-count">{{ terms.length }}語</span>
+                        </div>
+                        <div class="term-buttons">
+                            <wordlist
+                                v-for="term in terms"
+                                v-bind:key="term.id"
+                                v-bind:term="term"
+                                v-on:select="showTerm"
+                            ></wordlist>
+                        </div>
+                    </section>
+
+                    <section class="panel control-card options-card">
+                        <div class="panel-heading compact">
+                            <div>
+                                <p class="section-label">APPEARANCE</p>
+                                <h2>デザイン設定</h2>
+                            </div>
+                            <button class="text-button" type="button" v-on:click="resetAppearance">
+                                初期値に戻す
+                            </button>
+                        </div>
+
+                        <div class="option-list">
+                            <label class="option-row">
+                                <span>横幅 <output>{{ settings.appearance.width }}px</output></span>
+                                <input type="range" min="360" max="800" step="10"
+                                    v-model.number="settings.appearance.width" v-on:input="updateSettings">
+                            </label>
+                            <label class="option-row">
+                                <span>高さ <output>{{ settings.appearance.height }}px</output></span>
+                                <input type="range" min="140" max="360" step="10"
+                                    v-model.number="settings.appearance.height" v-on:input="updateSettings">
+                            </label>
+                            <label class="option-row">
+                                <span>見出しサイズ <output>{{ settings.appearance.titleFontSize }}px</output></span>
+                                <input type="range" min="22" max="52" step="1"
+                                    v-model.number="settings.appearance.titleFontSize" v-on:input="updateSettings">
+                            </label>
+                            <label class="option-row">
+                                <span>本文サイズ <output>{{ settings.appearance.descriptionFontSize }}px</output></span>
+                                <input type="range" min="14" max="32" step="1"
+                                    v-model.number="settings.appearance.descriptionFontSize" v-on:input="updateSettings">
+                            </label>
+                            <label class="option-row">
+                                <span>角丸 <output>{{ settings.appearance.borderRadius }}px</output></span>
+                                <input type="range" min="0" max="36" step="1"
+                                    v-model.number="settings.appearance.borderRadius" v-on:input="updateSettings">
+                            </label>
+                        </div>
+
+                        <div class="select-grid">
+                            <label class="field-label">
+                                <span>フォント</span>
+                                <select v-model="settings.appearance.fontFamily" v-on:change="updateSettings">
+                                    <option value="sans">ゴシック</option>
+                                    <option value="yugothic">游ゴシック</option>
+                                    <option value="meiryo">メイリオ</option>
+                                    <option value="bizud">BIZ UDゴシック</option>
+                                    <option value="rounded">丸ゴシック</option>
+                                    <option value="serif">明朝</option>
+                                    <option value="monospace">等幅ゴシック</option>
+                                </select>
+                            </label>
+                            <label class="field-label">
+                                <span>文字揃え</span>
+                                <select v-model="settings.appearance.textAlign" v-on:change="updateSettings">
+                                    <option value="left">左揃え</option>
+                                    <option value="center">中央揃え</option>
+                                </select>
+                            </label>
+                        </div>
+
+                        <div class="color-grid">
+                            <label class="color-field">
+                                <span>アクセント</span>
+                                <input type="color" v-model="settings.appearance.accentColor" v-on:input="updateSettings">
+                            </label>
+                            <label class="color-field">
+                                <span>カード</span>
+                                <input type="color" v-model="settings.appearance.backgroundColor" v-on:input="updateSettings">
+                            </label>
+                            <label class="color-field">
+                                <span>文字</span>
+                                <input type="color" v-model="settings.appearance.textColor" v-on:input="updateSettings">
+                            </label>
+                        </div>
+                    </section>
+
+                    <section class="panel control-card options-card">
+                        <div class="panel-heading compact">
+                            <div>
+                                <p class="section-label">BEHAVIOR</p>
+                                <h2>表示設定</h2>
+                            </div>
+                        </div>
+                        <div class="option-list">
+                            <label class="option-row">
+                                <span>表示時間 <output>{{ Number(settings.displaySeconds).toFixed(1) }}秒</output></span>
+                                <input type="range" min="1" max="10" step="0.1"
+                                    v-model.number="settings.displaySeconds" v-on:input="updateSettings">
+                            </label>
+                            <label class="option-row">
+                                <span>イン時間 <output>{{ Number(settings.enterSeconds).toFixed(1) }}秒</output></span>
+                                <input type="range" min="0.1" max="2" step="0.1"
+                                    v-model.number="settings.enterSeconds" v-on:input="updateSettings">
+                            </label>
+                            <label class="option-row">
+                                <span>アウト時間 <output>{{ Number(settings.exitSeconds).toFixed(1) }}秒</output></span>
+                                <input type="range" min="0.1" max="2" step="0.1"
+                                    v-model.number="settings.exitSeconds" v-on:input="updateSettings">
+                            </label>
+                            <label class="option-row">
+                                <span>キュー間隔 <output>{{ Number(settings.queueIntervalSeconds).toFixed(1) }}秒</output></span>
+                                <input type="range" min="0" max="5" step="0.1"
+                                    v-model.number="settings.queueIntervalSeconds" v-on:input="updateSettings">
+                            </label>
+                            <label class="option-row">
+                                <span>キュー最大件数 <output>{{ settings.queueMaxItems }}件</output></span>
+                                <input type="range" min="1" max="5" step="1"
+                                    v-model.number="settings.queueMaxItems" v-on:input="updateSettings">
+                            </label>
+                            <label class="option-row">
+                                <span>1文の検知上限 <output>{{ settings.maxMatchesPerTranscript }}件</output></span>
+                                <input type="range" min="1" max="5" step="1"
+                                    v-model.number="settings.maxMatchesPerTranscript" v-on:input="updateSettings">
+                            </label>
+                            <label class="option-row">
+                                <span>クールダウン秒数 <output>{{ settings.cooldownSeconds }}秒</output></span>
+                                <input type="range" min="0" max="180" step="1"
+                                    v-model.number="settings.cooldownSeconds" v-on:input="updateSettings">
+                            </label>
+                        </div>
+                    </section>
+
+                </aside>
+            </main>
+        </div>
+
+        <transition name="dialog-fade">
+            <div
+                v-if="!overlayMode && importDialog.visible"
+                class="dialog-backdrop"
+                role="presentation"
+                v-on:click.self="closeImportDialog"
+                v-on:keydown.esc.stop="closeImportDialog"
+            >
+                <section
+                    class="import-dialog"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="import-dialog-title"
+                >
+                    <div class="import-dialog-header">
+                        <div class="import-error-mark" aria-hidden="true">!</div>
+                        <div>
+                            <p class="section-label">IMPORT ERROR</p>
+                            <h2 id="import-dialog-title">旧バージョンのJSONです</h2>
+                        </div>
+                        <button
+                            ref="importDialogClose"
+                            class="dialog-close"
+                            type="button"
+                            aria-label="ダイアログを閉じる"
+                            v-on:click="closeImportDialog"
+                        >×</button>
+                    </div>
+
+                    <p class="import-dialog-message">
+                        <strong>{{ importDialog.fileName }}</strong> は schemaVersion:
+                        {{ importDialog.schemaVersion }} のため読み込まれませんでした。
+                        現行形式は schemaVersion: {{ currentSchemaVersion }} です。
+                    </p>
+
+                    <div class="prompt-guide">
+                        <div class="prompt-guide-heading">
+                            <div>
+                                <span>LLMへの変換指示例</span>
+                                <small>ChatGPTなどにそのまま貼り付けられます。</small>
+                            </div>
+                            <button class="prompt-copy-button" type="button" v-on:click="copyImportPrompt">
+                                {{ importPromptCopyStatus === 'copied' ? 'コピーしました' : '指示文をコピー' }}
+                            </button>
+                        </div>
+                        <textarea
+                            class="conversion-prompt"
+                            readonly
+                            v-bind:value="importDialog.prompt"
+                            v-on:focus="$event.target.select()"
+                            v-bind:aria-label="'schemaVersion ' + currentSchemaVersion + 'への変換指示文'"
+                        ></textarea>
+                        <p v-if="importPromptCopyStatus === 'error'" class="prompt-copy-error">
+                            コピーできませんでした。テキスト欄から手動でコピーしてください。
+                        </p>
+                    </div>
+
+                    <div class="import-dialog-actions">
+                        <button class="dialog-dismiss-button" type="button" v-on:click="closeImportDialog">
+                            閉じる
+                        </button>
+                    </div>
+                </section>
+            </div>
+        </transition>
     </div>
     <script src="src/script.js"></script>
 </body>
+</html>

@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 3,
+  "title": "用語集フォーマット例",
+  "contextBiasTerms": [
+    "サモナーズリフト",
+    "アーリ",
+    "ヤスオ",
+    "ジンクス",
+    "ラックス",
+    "リーシン",
+    "ルル",
+    "ティーモ",
+    "バロンナッシャー",
+    "ブルーセンチネル"
+  ],
+  "settings": {
+    "displaySeconds": 5,
+    "enterSeconds": 0.5,
+    "exitSeconds": 0.5,
+    "queueIntervalSeconds": 0,
+    "queueMaxItems": 3,
+    "maxMatchesPerTranscript": 3,
+    "cooldownSeconds": 60,
+    "appearance": {
+      "width": 560,
+      "height": 190,
+      "titleFontSize": 34,
+      "descriptionFontSize": 20,
+      "borderRadius": 20,
+      "fontFamily": "sans",
+      "textAlign": "left",
+      "accentColor": "#59d8ff",
+      "backgroundColor": "#101827",
+      "textColor": "#f5f8fc"
+    }
+  },
+  "terms": [
+    {
+      "id": "cs",
+      "title": "CS (クリープスコア)",
+      "aliases": ["CS", "シーエス", "クリープスコア"],
+      "description": "ミニオンや中立モンスターへのラストヒット数を示す指標。獲得ゴールド量の目安になる。",
+      "enabled": true
+    },
+    {
+      "id": "vision",
+      "title": "視界/ビジョン",
+      "aliases": ["視界", "ビジョン"],
+      "description": "敵の位置やマップ上の安全を把握できる情報。ワードの設置と破壊が視界管理の中心になる。",
+      "enabled": true
+    }
+  ]
+}

@@ -1,1 +1,16 @@
 workspace.code-workspace
+
+# Local clone used to build sherpa-onnx WebAssembly.
+sherpa-onnx/
+
+# Generated/downloaded sherpa-onnx WebAssembly runtime and Japanese model.
+sherpa-wasm/*
+!sherpa-wasm/README.md
+
+# emsdk
+emsdk/
+
+# Third-party package and virtual-environment directories.
+node_modules/
+.venv/
+venv/

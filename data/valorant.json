@@ -1,0 +1,198 @@
+{
+  "schemaVersion": 3,
+  "title": "VALORANT 用語集",
+  "contextBiasTerms": [
+    "ケイオー",
+    "アイソ",
+    "アストラ",
+    "ヴァイス",
+    "ヴァイパー",
+    "ヴィトー",
+    "ウェイレイ",
+    "オーメン",
+    "キルジョイ",
+    "クローヴ",
+    "ゲッコー",
+    "サイファー",
+    "ジェット",
+    "スカイ",
+    "セージ",
+    "ソーヴァ",
+    "チェンバー",
+    "デッドロック",
+    "テホ",
+    "ネオン",
+    "ハーバー",
+    "フェイド",
+    "フェニックス",
+    "ブリーチ",
+    "ブリムストーン",
+    "ミクス",
+    "ヨル",
+    "レイズ",
+    "レイナ",
+    "アセント",
+    "バインド",
+    "ヘイヴン",
+    "スプリット",
+    "アイスボックス",
+    "ブリーズ",
+    "フラクチャー",
+    "パール",
+    "ロータス",
+    "サンセット",
+    "アビス",
+    "サミット",
+    "ヴァンダル",
+    "ファントム",
+    "オペレーター",
+    "シェリフ",
+    "ゴースト",
+    "スペクター",
+    "ブルドッグ",
+    "ガーディアン",
+    "オーディン"
+  ],
+  "settings": {
+    "displaySeconds": 4,
+    "enterSeconds": 0.5,
+    "exitSeconds": 0.5,
+    "queueIntervalSeconds": 0.4,
+    "queueMaxItems": 3,
+    "maxMatchesPerTranscript": 3,
+    "cooldownSeconds": 45,
+    "appearance": {
+      "width": 560,
+      "height": 190,
+      "titleFontSize": 34,
+      "descriptionFontSize": 20,
+      "borderRadius": 20,
+      "fontFamily": "sans",
+      "textAlign": "left",
+      "accentColor": "#ff4655",
+      "backgroundColor": "#101820",
+      "textColor": "#f5f5f5"
+    }
+  },
+  "terms": [
+    {
+      "id": "spike",
+      "title": "スパイク",
+      "aliases": ["スパイク", "ボム"],
+      "description": "アタッカーが設置する目標物。設置後に起爆すればアタッカー、解除すればディフェンダーがラウンドを取る。",
+      "enabled": true
+    },
+    {
+      "id": "plant",
+      "title": "プラント/スパイク設置",
+      "aliases": ["プラント", "スパイク設置"],
+      "description": "アタッカーが指定サイト内へスパイクを設置すること。設置後は起爆まで守る展開になる。",
+      "enabled": true
+    },
+    {
+      "id": "defuse",
+      "title": "ディフューズ/スパイク解除",
+      "aliases": ["ディフューズ", "デフューズ", "スパイク解除"],
+      "description": "設置されたスパイクをディフェンダーが解除すること。解除を完了するとラウンドに勝利する。",
+      "enabled": true
+    },
+    {
+      "id": "entry",
+      "title": "エントリー",
+      "aliases": ["エントリー"],
+      "description": "サイトへ先頭で進入し、敵の位置を明らかにしながら味方が入るきっかけを作る役割や動き。",
+      "enabled": true
+    },
+    {
+      "id": "trade",
+      "title": "トレードキル",
+      "aliases": ["トレードキル", "トレード", "キル交換"],
+      "description": "味方を倒した敵を直後に倒し返すこと。相手だけが人数有利になるのを防ぐ基本連携。",
+      "enabled": true
+    },
+    {
+      "id": "peek",
+      "title": "ピーク",
+      "aliases": ["ピーク", "ピーキング"],
+      "description": "遮蔽物から一時的に体を出し、敵の位置確認や撃ち合いを行う動き。",
+      "enabled": true
+    },
+    {
+      "id": "retake",
+      "title": "リテイク",
+      "aliases": ["リテイク"],
+      "description": "スパイク設置などで奪われたサイトへ味方と入り直し、敵の排除と解除を狙う動き。",
+      "enabled": true
+    },
+    {
+      "id": "rotate",
+      "title": "ローテーション",
+      "aliases": ["ローテーション", "ローテート"],
+      "description": "敵の攻め先や戦況に合わせて、別のサイトやエリアへ大きく移動すること。",
+      "enabled": true
+    },
+    {
+      "id": "eco",
+      "title": "エコラウンド",
+      "aliases": ["エコラウンド", "エコ"],
+      "description": "次以降のラウンドに備えてクレジットを節約し、購入を最低限に抑えるラウンド。",
+      "enabled": true
+    },
+    {
+      "id": "force-buy",
+      "title": "フォースバイ",
+      "aliases": ["フォースバイ", "フォース"],
+      "description": "十分な装備を揃えにくい所持金でも、そのラウンドを重視して可能な限り武器や防具を購入する判断。",
+      "enabled": true
+    },
+    {
+      "id": "full-buy",
+      "title": "フルバイ",
+      "aliases": ["フルバイ"],
+      "description": "主力武器、十分なアーマー、必要なアビリティを揃えて戦える購入状態。",
+      "enabled": true
+    },
+    {
+      "id": "save",
+      "title": "セーブ",
+      "aliases": ["セーブ"],
+      "description": "勝利が難しい場面で無理に戦わず、生存して武器を次ラウンドへ持ち越す判断。",
+      "enabled": true
+    },
+    {
+      "id": "lurk",
+      "title": "ラーク",
+      "aliases": ["ラーク"],
+      "description": "本隊と離れて静かに動き、敵のローテートを捕まえたり別地点へ圧力をかけたりする役割。",
+      "enabled": true
+    },
+    {
+      "id": "default",
+      "title": "デフォルト",
+      "aliases": ["デフォルト"],
+      "description": "序盤から攻め先を決め切らず、マップへ広がって情報収集や相手のアビリティ消費を狙う基本形。",
+      "enabled": true
+    },
+    {
+      "id": "crossfire",
+      "title": "クロスファイア",
+      "aliases": ["クロスファイア", "十字砲火"],
+      "description": "複数人が異なる角度から同じ進入地点を狙い、一人に撃たれても味方が倒し返せる配置。",
+      "enabled": true
+    },
+    {
+      "id": "prefire",
+      "title": "プリファイア",
+      "aliases": ["プリファイア", "決め撃ち"],
+      "description": "敵がいると予測した位置へ、姿を確認する前または確認と同時に射撃するテクニック。",
+      "enabled": true
+    },
+    {
+      "id": "clutch",
+      "title": "クラッチ",
+      "aliases": ["クラッチ"],
+      "description": "味方が倒されて不利になった状況から、残ったプレイヤーがラウンド勝利をつかむこと。",
+      "enabled": true
+    }
+  ]
+}

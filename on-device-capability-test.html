@@ -1,0 +1,538 @@
+<!doctype html>
+<html lang="ja">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>On-device SpeechRecognition 機能確認</title>
+    <style>
+        :root {
+            color-scheme: dark;
+            font-family: "Yu Gothic UI", Meiryo, sans-serif;
+            background: #0b1018;
+            color: #edf3f8;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 32px 20px;
+        }
+
+        main {
+            width: min(760px, 100%);
+            margin: 0 auto;
+        }
+
+        h1 {
+            margin: 0 0 8px;
+            font-size: 26px;
+        }
+
+        p {
+            color: #aeb9c6;
+            line-height: 1.7;
+        }
+
+        button {
+            padding: 10px 18px;
+            border: 1px solid #4f6478;
+            border-radius: 8px;
+            background: #172231;
+            color: inherit;
+            font: inherit;
+            cursor: pointer;
+        }
+
+        button:disabled {
+            cursor: wait;
+            opacity: 0.6;
+        }
+
+        .button-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 12px 0 20px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #111a26;
+        }
+
+        th,
+        td {
+            padding: 12px 14px;
+            border: 1px solid #2d3a49;
+            text-align: left;
+        }
+
+        th {
+            width: 52%;
+            color: #b8c5d2;
+            font-weight: 600;
+        }
+
+        .available,
+        .downloadable,
+        .supported {
+            color: #61e6aa;
+        }
+
+        .downloading {
+            color: #f1ca65;
+        }
+
+        .unavailable,
+        .unsupported,
+        .error {
+            color: #ff8b8b;
+        }
+
+        pre {
+            overflow: auto;
+            min-height: 100px;
+            padding: 14px;
+            border: 1px solid #2d3a49;
+            border-radius: 8px;
+            background: #080d14;
+            color: #b9c8d7;
+            line-height: 1.5;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 180px;
+            padding: 14px;
+            resize: vertical;
+            border: 1px solid #2d3a49;
+            border-radius: 8px;
+            background: #080d14;
+            color: #d5e0eb;
+            font: 14px/1.6 "BIZ UDGothic", "MS Gothic", monospace;
+        }
+
+        .recognition-mode-field {
+            display: grid;
+            gap: 6px;
+            margin-top: 14px;
+            color: #b8c5d2;
+            font-weight: 600;
+        }
+
+        select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #4f6478;
+            border-radius: 8px;
+            background: #111a26;
+            color: #edf3f8;
+            font: inherit;
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <h1>On-device SpeechRecognition 機能確認</h1>
+        <p>
+            APIの存在と日本語on-deviceモデルの可用性を確認します。
+            日本語commandモデルは下のボタンからこのブラウザへ導入できます。
+            「認識を開始」を押した場合だけマイクを使用します。
+        </p>
+        <div class="button-row">
+            <button id="run-test" type="button">機能を再確認</button>
+            <button id="install-model" type="button" disabled>
+                日本語commandモデルを確認中
+            </button>
+        </div>
+
+        <table>
+            <tbody id="results"></tbody>
+        </table>
+
+        <h2>詳細</h2>
+        <pre id="details">確認中...</pre>
+
+        <h2>音声認識テスト</h2>
+        <p>
+            On-device認識とクラウド利用を許可する通常認識を切り替えて比較できます。
+            モデル未導入や非対応などのエラーも下欄へ表示します。
+        </p>
+        <label class="recognition-mode-field" for="recognition-mode">
+            認識方式
+            <select id="recognition-mode">
+                <option value="on-device">On-device（phrases / boost 5）</option>
+                <option value="cloud">クラウド認識（phrasesなし）</option>
+            </select>
+        </label>
+        <p id="recognition-mode-note">
+            日本語commandモデルを使用し、「カイティング」をboost 5で登録します。
+        </p>
+        <div class="button-row">
+            <button id="start-recognition" type="button">認識を開始</button>
+            <button id="stop-recognition" type="button" disabled>停止</button>
+        </div>
+        <textarea
+            id="recognition-debug"
+            rows="10"
+            readonly
+            spellcheck="false"
+            aria-label="音声認識デバッグ"
+        >[SYSTEM] 待機中です。</textarea>
+    </main>
+
+    <script>
+        const TEST_LANGUAGE = 'ja-JP';
+        const QUALITY_LEVELS = ['command', 'dictation', 'conversation'];
+        const resultBody = document.getElementById('results');
+        const details = document.getElementById('details');
+        const runButton = document.getElementById('run-test');
+        const installModelButton = document.getElementById('install-model');
+        const startRecognitionButton = document.getElementById('start-recognition');
+        const stopRecognitionButton = document.getElementById('stop-recognition');
+        const recognitionModeSelect = document.getElementById('recognition-mode');
+        const recognitionModeNote = document.getElementById('recognition-mode-note');
+        const recognitionDebug = document.getElementById('recognition-debug');
+        let activeRecognition = null;
+
+        function addResult(label, value, state) {
+            const row = document.createElement('tr');
+            const heading = document.createElement('th');
+            const result = document.createElement('td');
+            heading.textContent = label;
+            result.textContent = String(value);
+            result.className = state || '';
+            row.append(heading, result);
+            resultBody.appendChild(row);
+        }
+
+        function supportState(value) {
+            return value ? 'supported' : 'unsupported';
+        }
+
+        function updateInstallButton(status) {
+            const states = {
+                available: {
+                    text: '日本語commandモデル導入済み',
+                    disabled: true
+                },
+                downloadable: {
+                    text: '日本語commandモデルをインストール',
+                    disabled: false
+                },
+                downloading: {
+                    text: '日本語commandモデルをダウンロード中',
+                    disabled: true
+                },
+                unavailable: {
+                    text: '日本語commandモデルは利用不可',
+                    disabled: true
+                }
+            };
+            const state = states[status] || {
+                text: '日本語commandモデルを確認できません',
+                disabled: true
+            };
+            installModelButton.textContent = state.text;
+            installModelButton.disabled = state.disabled;
+        }
+
+        async function checkAvailability(SpeechRecognitionApi, quality) {
+            try {
+                return await SpeechRecognitionApi.available({
+                    langs: [TEST_LANGUAGE],
+                    processLocally: true,
+                    quality: quality
+                });
+            } catch (error) {
+                return 'ERROR ' + error.name + ': ' + error.message;
+            }
+        }
+
+        async function runCapabilityTest() {
+            runButton.disabled = true;
+            resultBody.replaceChildren();
+            details.textContent = '確認中...';
+
+            const SpeechRecognitionApi = window.SpeechRecognition || window.webkitSpeechRecognition;
+            const SpeechRecognitionPhraseApi =
+                window.SpeechRecognitionPhrase || window.webkitSpeechRecognitionPhrase;
+            const recognition = SpeechRecognitionApi ? new SpeechRecognitionApi() : null;
+            const report = {
+                checkedAt: new Date().toISOString(),
+                language: TEST_LANGUAGE,
+                userAgent: navigator.userAgent,
+                secureContext: window.isSecureContext,
+                speechRecognition: typeof SpeechRecognitionApi === 'function',
+                processLocally: Boolean(recognition && 'processLocally' in recognition),
+                phrases: Boolean(recognition && 'phrases' in recognition),
+                phraseConstructor: typeof SpeechRecognitionPhraseApi === 'function',
+                availableMethod: Boolean(
+                    SpeechRecognitionApi && typeof SpeechRecognitionApi.available === 'function'
+                ),
+                installMethod: Boolean(
+                    SpeechRecognitionApi && typeof SpeechRecognitionApi.install === 'function'
+                ),
+                phraseConstruction: false,
+                availability: {}
+            };
+
+            if (report.phraseConstructor) {
+                try {
+                    const phrase = new SpeechRecognitionPhraseApi('カイティング', 5);
+                    report.phraseConstruction = phrase.phrase === 'カイティング' && phrase.boost === 5;
+                } catch (error) {
+                    report.phraseConstructionError = error.name + ': ' + error.message;
+                }
+            }
+
+            if (report.availableMethod) {
+                for (const quality of QUALITY_LEVELS) {
+                    report.availability[quality] = await checkAvailability(
+                        SpeechRecognitionApi,
+                        quality
+                    );
+                }
+            }
+
+            addResult('Secure Context', report.secureContext, supportState(report.secureContext));
+            addResult(
+                'SpeechRecognition',
+                report.speechRecognition,
+                supportState(report.speechRecognition)
+            );
+            addResult('processLocally', report.processLocally, supportState(report.processLocally));
+            addResult('phrases', report.phrases, supportState(report.phrases));
+            addResult(
+                'SpeechRecognitionPhrase',
+                report.phraseConstructor,
+                supportState(report.phraseConstructor)
+            );
+            addResult(
+                'Phrase生成（カイティング / boost 5）',
+                report.phraseConstruction,
+                supportState(report.phraseConstruction)
+            );
+            addResult('available()', report.availableMethod, supportState(report.availableMethod));
+            addResult('install()', report.installMethod, supportState(report.installMethod));
+
+            for (const quality of QUALITY_LEVELS) {
+                const value = report.availability[quality] || '未確認';
+                const state = String(value).startsWith('ERROR') ? 'error' : value;
+                addResult(TEST_LANGUAGE + ' / ' + quality, value, state);
+            }
+
+            details.textContent = JSON.stringify(report, null, 2);
+            updateInstallButton(report.availability.command);
+            runButton.disabled = false;
+            window.capabilityTestReport = report;
+        }
+
+        async function installCommandModel() {
+            const SpeechRecognitionApi = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognitionApi || typeof SpeechRecognitionApi.install !== 'function') {
+                appendRecognitionDebug('[ERROR] install() APIがありません。');
+                return;
+            }
+
+            installModelButton.disabled = true;
+            installModelButton.textContent = '日本語commandモデルをダウンロード中';
+            appendRecognitionDebug('[SYSTEM] 日本語commandモデルのインストールを開始します。');
+
+            try {
+                const installed = await SpeechRecognitionApi.install({
+                    langs: [TEST_LANGUAGE],
+                    processLocally: true,
+                    quality: 'command'
+                });
+
+                if (!installed) {
+                    appendRecognitionDebug('[ERROR] 日本語commandモデルを導入できませんでした。');
+                    await runCapabilityTest();
+                    return;
+                }
+
+                appendRecognitionDebug('[SYSTEM] 日本語commandモデルを導入しました。');
+                await runCapabilityTest();
+            } catch (error) {
+                appendRecognitionDebug(
+                    '[ERROR] モデル導入失敗: ' + error.name + ': ' + error.message
+                );
+                await runCapabilityTest();
+            }
+        }
+
+        function appendRecognitionDebug(message) {
+            const timestamp = new Date().toLocaleTimeString('ja-JP', { hour12: false });
+            const prefix = recognitionDebug.value ? '\n' : '';
+            recognitionDebug.value += prefix + timestamp + ' ' + message;
+            recognitionDebug.scrollTop = recognitionDebug.scrollHeight;
+        }
+
+        function setRecognitionButtonState(running) {
+            startRecognitionButton.disabled = running;
+            stopRecognitionButton.disabled = !running;
+            recognitionModeSelect.disabled = running;
+        }
+
+        function updateRecognitionModeNote() {
+            const onDevice = recognitionModeSelect.value === 'on-device';
+            recognitionModeNote.textContent = onDevice
+                ? '日本語commandモデルを使用し、「カイティング」をboost 5で登録します。'
+                : 'processLocally=falseで開始します。処理先はブラウザが選択します。';
+        }
+
+        function createTestRecognition(mode) {
+            const SpeechRecognitionApi = window.SpeechRecognition || window.webkitSpeechRecognition;
+            const SpeechRecognitionPhraseApi =
+                window.SpeechRecognitionPhrase || window.webkitSpeechRecognitionPhrase;
+
+            if (!SpeechRecognitionApi) {
+                appendRecognitionDebug('[ERROR] SpeechRecognition APIがありません。');
+                return null;
+            }
+
+            const recognition = new SpeechRecognitionApi();
+            const onDevice = mode === 'on-device';
+            recognition.lang = TEST_LANGUAGE;
+            recognition.processLocally = onDevice;
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            recognition.maxAlternatives = 3;
+
+            recognition.onstart = () => {
+                appendRecognitionDebug(
+                    '[SYSTEM] ' + (onDevice ? 'on-device' : 'クラウド') +
+                    '音声認識を開始しました。'
+                );
+                setRecognitionButtonState(true);
+            };
+            recognition.onresult = event => {
+                for (let index = event.resultIndex; index < event.results.length; index++) {
+                    const result = event.results[index];
+                    const phase = result.isFinal ? 'FINAL' : 'INTERIM';
+                    const candidates = [];
+
+                    for (let candidateIndex = 0; candidateIndex < result.length; candidateIndex++) {
+                        const candidate = result[candidateIndex];
+                        const transcript = candidate && candidate.transcript
+                            ? candidate.transcript
+                            : '（空）';
+                        const confidence = candidate && Number.isFinite(candidate.confidence)
+                            ? candidate.confidence.toFixed(3)
+                            : '—';
+                        candidates.push(
+                            '  ' + (candidateIndex + 1) + '. ' + transcript +
+                            ' / confidence: ' + confidence
+                        );
+                    }
+
+                    appendRecognitionDebug(
+                        '[' + phase + '] 候補 ' + candidates.length + '件\n' +
+                        (candidates.join('\n') || '  （候補なし）')
+                    );
+                }
+            };
+            recognition.onerror = event => {
+                const error = event && event.error ? event.error : 'unknown';
+                const message = event && event.message ? ' / ' + event.message : '';
+                appendRecognitionDebug('[ERROR] ' + error + message);
+                if (
+                    onDevice &&
+                    error === 'language-not-supported' &&
+                    window.capabilityTestReport &&
+                    window.capabilityTestReport.availability.command === 'downloadable'
+                ) {
+                    appendRecognitionDebug(
+                        '[SYSTEM] 日本語commandモデルは導入可能ですが、まだインストールされていません。'
+                    );
+                }
+                if (activeRecognition === recognition) {
+                    setRecognitionButtonState(false);
+                    activeRecognition = null;
+                }
+            };
+            recognition.onend = () => {
+                appendRecognitionDebug('[SYSTEM] 音声認識を終了しました。');
+                if (activeRecognition === recognition) {
+                    setRecognitionButtonState(false);
+                    activeRecognition = null;
+                }
+            };
+
+            if (
+                onDevice &&
+                SpeechRecognitionPhraseApi &&
+                recognition.phrases &&
+                typeof recognition.phrases.push === 'function'
+            ) {
+                try {
+                    recognition.phrases.push(
+                        new SpeechRecognitionPhraseApi('カイティング', 5)
+                    );
+                    appendRecognitionDebug('[SYSTEM] phrases: カイティング / boost 5');
+                } catch (error) {
+                    appendRecognitionDebug(
+                        '[ERROR] phrases登録失敗: ' + error.name + ': ' + error.message
+                    );
+                }
+            } else if (onDevice) {
+                appendRecognitionDebug('[ERROR] phrases APIがありません。');
+            } else {
+                appendRecognitionDebug('[SYSTEM] クラウド認識ではphrasesを登録しません。');
+            }
+
+            return recognition;
+        }
+
+        function startRecognition() {
+            if (activeRecognition) return;
+            recognitionDebug.value = '';
+
+            const mode = recognitionModeSelect.value;
+            const commandStatus = window.capabilityTestReport &&
+                window.capabilityTestReport.availability.command;
+            if (mode === 'on-device' && commandStatus !== 'available') {
+                appendRecognitionDebug(
+                    '[ERROR] 日本語commandモデルが未導入です。先にインストールしてください。'
+                );
+                return;
+            }
+
+            appendRecognitionDebug(
+                '[SYSTEM] ja-JP / processLocally=' + (mode === 'on-device') +
+                ' / maxAlternatives=3 で開始を要求します。'
+            );
+            activeRecognition = createTestRecognition(mode);
+            if (!activeRecognition) return;
+
+            setRecognitionButtonState(true);
+            try {
+                activeRecognition.start();
+            } catch (error) {
+                appendRecognitionDebug('[ERROR] 開始失敗: ' + error.name + ': ' + error.message);
+                setRecognitionButtonState(false);
+                activeRecognition = null;
+            }
+        }
+
+        function stopRecognition() {
+            if (!activeRecognition) return;
+            appendRecognitionDebug('[SYSTEM] 停止を要求しました。');
+            activeRecognition.stop();
+        }
+
+        runButton.addEventListener('click', runCapabilityTest);
+        installModelButton.addEventListener('click', installCommandModel);
+        recognitionModeSelect.addEventListener('change', updateRecognitionModeNote);
+        startRecognitionButton.addEventListener('click', startRecognition);
+        stopRecognitionButton.addEventListener('click', stopRecognition);
+        updateRecognitionModeNote();
+        runCapabilityTest();
+    </script>
+</body>
+</html>

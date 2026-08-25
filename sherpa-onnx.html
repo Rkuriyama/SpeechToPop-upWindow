@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="ja">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="sherpa-onnx WebAssemblyで日本語音声を端末内認識するSpeech Popup Studio">
+    <title>Speech Popup Studio — sherpa-onnx</title>
+</head>
+<body>
+    <p>Speech Popup Studio の sherpa-onnx 版を開いています。</p>
+    <noscript>
+        JavaScriptを有効にしてから
+        <a href="./index.html?engine=sherpa">sherpa-onnx版</a>を開いてください。
+    </noscript>
+    <script>
+        const currentUrl = new URL(window.location.href);
+        const targetUrl = new URL('./index.html', currentUrl);
+        currentUrl.searchParams.forEach((value, key) => targetUrl.searchParams.append(key, value));
+        targetUrl.searchParams.set('engine', 'sherpa');
+        targetUrl.hash = currentUrl.hash;
+        window.location.replace(targetUrl.href);
+    </script>
+</body>
+</html>
